@@ -1,0 +1,86 @@
+~~ For more information about apt, please see http://maven.apache.org/doxia/references/apt-format.html
+Name
+
+	Connect To MQ Queue
+
+Overview
+
+	This action creates a connection to a IBM WebSphere MQ. 
+
+Details
+
+	* <<Version>>: ${project.version}
+	
+	* <<Type>>: Advanced Action
+
+	* <<Maturity>>: Experimental
+	
+	* <<NeoLoad>>: 5.0+ (Ultimate, Enterprise or Professional Edition w/ Integration & Customization option required)
+	
+	* <<NeoSense>>: Compatible
+	
+	* <<Author>>: Neotys
+	
+	* <<License>>: {{{http://www.neotys.com/documents/legal/bsd-neotys.txt}BSD Simplified}}.
+	
+	* <<Requirements>>: None
+	
+	* <<Bundled in NeoLoad>>: No
+	
+	[]
+
+* Parameters
+
+	* <<QueueManager>>: (required) Sets the name of the queue manager.
+	
+	* <<HostName>>: (required) Sets the name of the host.
+	
+	* <<Port>>: (required) Sets the port for a client connection.
+	
+	* <<Channel>>: (required) Sets the name of the channel - applies to client transport mode only.
+	
+	* <<QueueName>>: (required) The name of the Queue.
+	
+	* <<QueueSessionTransacted>>: (optional) A boolean to indicate whether the session is transacted.
+	
+	* <<QueueSessionAcknowledgeMode>>: (optional) An integer to indicate whether the consumer or the client will acknowledge any messages it receives; ignored if the session is transacted. Legal values are 1 for AUTO_ACKNOWLEDGE, 2 for CLIENT_ACKNOWLEDGE or 3 for DUPS_OK_ACKNOWLEDGE.
+			
+	[]
+
+* Status Codes
+
+	* <<NL-CONNECTTOMQQUEUE-ACTION-01>>: There was an issue parsing the parameters.
+	
+	* <<NL-CONNECTTOMQQUEUE-ACTION-02>>: There was an error while creating the connection to the Queue.
+	
+	* <<NL-CONNECTTOMQQUEUE-ACTION-03>>: There was an error while creating a message producer on the Queue.
+	
+	[]
+
+* Examples
+
+	* An example of connecting to a IBM WebSphere MQ queue.
+	
+		* <<QueueManager>>: QueueManager
+		
+		* <<HostName>>: localhost
+		
+		* <<Port>>: 1414
+		
+		* <<Channel>>: myChannelName 
+		
+		* <<QueueName>>: myQueueName
+				
+		[]	
+	
+	[]
+	
+ChangeLog
+
+	* 1.0.0
+
+		* Initial release
+		
+		[]
+	[]
+	
