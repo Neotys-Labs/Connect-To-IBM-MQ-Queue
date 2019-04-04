@@ -82,6 +82,10 @@ To use a X509 client certificate to negotiate the TLS communication, import the 
 
 <p align="center"><img src="/screenshots/certificate-manager.png" alt="Certificate manager" /></p>
 
+## Test environment
+
+This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/). See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
+
 ## Changelog
 
 * 2.1.3 - Support of TLS
