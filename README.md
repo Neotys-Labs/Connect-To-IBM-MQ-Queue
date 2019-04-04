@@ -52,11 +52,6 @@ Important: NeoLoad does not include MQ implementation jars (like mqcontext.jar).
 | SslPeerName     | SSL Peer Name. | optional |
 | SslProtocol     | SSL protocol to use, e.g. TLSv1, TLSv1.2. | optional |
 
-
-## Status Codes:
-NL-CONNECTTOMQQUEUE-ACTION-01: There was an issue parsing the parameters.
-NL-CONNECTTOMQQUEUE-ACTION-02: There was an error while creating the connection to the queue.
-
 ## Examples
 
 An example of connecting to a IBM WebSphere MQ queue:
@@ -69,6 +64,12 @@ Port: 1414
 Channel: DEV.APP.SVRCONN
 QueueName: myQueue
 Debug: true
+
+## Status Codes:
+NL-CONNECTTOMQQUEUE-ACTION-01: There was an issue parsing the parameters.
+
+NL-CONNECTTOMQQUEUE-ACTION-02: There was an error while creating the connection to the queue.
+
 
 ## TLS Support
 
@@ -84,7 +85,7 @@ To use a X509 client certificate to negotiate the TLS communication, import the 
 
 ## Test environment
 
-This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/). See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
+This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/) version 9.1.2.0. See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
 
 ## Changelog
 
