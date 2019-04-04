@@ -89,5 +89,5 @@ This advanced action was tested based on a [docker image of IBM MQ](https://hub.
 
 ## Changelog
 
-* 2.1.3 - Support of TLS
-* 2.0.3 – Add the possibility to specify the username and password used to create the connection.
+* 2.1.5 - Support of TLS
+* 2.0.3 - Add the possibility to specify the username and password used to create the connection.
