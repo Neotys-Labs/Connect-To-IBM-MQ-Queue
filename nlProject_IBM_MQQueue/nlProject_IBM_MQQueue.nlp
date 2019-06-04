@@ -1,0 +1,13 @@
+# Project description file
+
+project.name=nlProject_IBM_MQQueue
+project.version=6.5
+project.original.version=6.5
+product.name=NeoLoad
+product.original.name=NeoLoad
+product.version=6.10.0
+product.original.version=6.8.1
+project.id=a82e3695-a25d-4973-b7b7-9f71a6e19574
+project.config.path=config.zip
+project.config.storage=ZIP
+team.server.enabled=false

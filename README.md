@@ -59,10 +59,15 @@ An example of connecting to a IBM WebSphere MQ queue:
 <p align="center"><img src="/screenshots/connect.png" alt="Connect" /></p>
 
 QueueManager: QM1
-HostName: 10.0.1.13
+
+HostName: localhost
+
 Port: 1414
+
 Channel: DEV.APP.SVRCONN
-QueueName: myQueue
+
+QueueName: DEV.QUEUE.1
+
 Debug: true
 
 ## Status Codes:
@@ -86,6 +91,8 @@ To use a X509 client certificate to negotiate the TLS communication, import the 
 ## Test environment
 
 This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/) version 9.1.2.0. See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
+IBM MQ Console: https://localhost:9443/ibmmq/console/login.html
+
 
 ## Changelog
 
