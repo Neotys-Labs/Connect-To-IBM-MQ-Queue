@@ -91,8 +91,12 @@ To use a X509 client certificate to negotiate the TLS communication, import the 
 ## Test environment
 
 This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/) version 9.1.2.0. See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
+
 IBM MQ Console: https://localhost:9443/ibmmq/console/login.html
 
+Login=admin
+
+Password=passw0rd
 
 ## Changelog
 
