@@ -117,7 +117,37 @@ public final class ConnectToMQQueueArguments {
 		SslProtocol("SslProtocol", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
 				"",
 				"SSL protocol to use, e.g. TLSv1, TLSv1.2 or keep value empty for default SSL protocol.",
-				ConnectToMQQueueArgumentValidator.NON_EMPTY);
+				ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		TrustStorePath("TrustStorePath", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"<path-to-truststore.jks>",
+				"Location of the Java keystore file containing the collection of CA certificates trusted by this application process (trust store)",
+				ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		TrustStorePassword("TrustStorePassword", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"",
+				"Password to unlock the truststore file.",
+				ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		KeyStorePath("KeyStorePath", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"<path-to-keystore.jks>",
+						"Location of the Java keystore file containing an application process's own certificate and private key.",
+					   ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		KeyStorePassword("KeyStorePassword", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"",
+						"Password to unlock the keystore file.",
+						   ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		QueueOperation("QueueOperation", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"CREATE",
+				"CREATE: Create queue session then create queue / ACCESS: Access existing queue MQQueueManager.",
+				ConnectToMQQueueArgumentValidator.NON_EMPTY),
+
+		OpenOptions("OpenOptions", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"8240",
+				"Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) | MQC.MQOO_INQUIRE (32) | MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240.",
+				ConnectToMQQueueArgumentValidator.INTEGER_VALIDATOR);
 
 		private final String name;
 		private final OptionalRequired optionalRequired;

@@ -1,28 +1,10 @@
 package com.neotys.actions.jms.connecttomq;
 
-import static com.neotys.jms.context.ContextUtils.getContext;
-
-import java.io.File;
-import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Map;
-
-import javax.jms.JMSException;
-import javax.jms.Queue;
-import javax.jms.QueueConnection;
-import javax.jms.QueueSession;
-import javax.jms.Session;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
 import com.google.common.base.Optional;
 import com.ibm.mq.MQC;
 import com.ibm.mq.MQEnvironment;
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.jms.MQQueue;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.neotys.actions.jms.connecttomq.ConnectToMQQueueArguments.ConnectToQueueOption;
@@ -31,24 +13,35 @@ import com.neotys.extensions.action.engine.ActionEngine;
 import com.neotys.extensions.action.engine.Logger;
 import com.neotys.extensions.action.engine.SampleResult;
 
+import javax.jms.*;
+import javax.net.ssl.*;
+import java.io.File;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Map;
+
+import static com.neotys.jms.context.ContextUtils.getContext;
+
 public final class ConnectToMQQueueActionEngine implements ActionEngine {
 
 	private static final String STATUS_CODE_INVALID_PARAMETER = "NL-CONNECTTOMQQUEUE-ACTION-01";
 	private static final String STATUS_CODE_ERROR_QUEUE_CONNECTION = "NL-CONNECTTOMQQUEUE-ACTION-02";
 	private static final String NEOLOAD_KEYSTORE_FORMAT = "PKCS12";
 	private static final String NEOLOAD_CERTIFICATE_ALGORITHM = "SunX509";
-	
+
 	@SuppressWarnings("deprecation")
 	@Override
 	public SampleResult execute(final com.neotys.extensions.action.engine.Context context, final List<ActionParameter> parameters) {
 
-		final Logger logger = context.getLogger();
+			final Logger logger = context.getLogger();
 
-		final SampleResult sampleResult = new SampleResult();
-		final ConnectToMQQueueArguments connectToQueueArguments;
-		try {
-			connectToQueueArguments = new ConnectToMQQueueArguments(logger, parameters);
-		} catch (final IllegalArgumentException iae) {
+			final SampleResult sampleResult = new SampleResult();
+			final ConnectToMQQueueArguments connectToQueueArguments;
+			try {
+				connectToQueueArguments = new ConnectToMQQueueArguments(logger, parameters);
+			} catch (final IllegalArgumentException iae) {
 			sampleResult.setError(true);
 			sampleResult.setStatusCode(STATUS_CODE_INVALID_PARAMETER);
 			sampleResult.setResponseContent("Could not create parse arguments" + iae.toString());
@@ -76,24 +69,62 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 		final boolean isPreferTLS = preferTLSParam.isPresent() && "true".equals(preferTLSParam.get());
 		final Optional<String> sslCipherSuite = parsedArgs.get(ConnectToQueueOption.SslCipherSuite.getName());
 		final Optional<String> sslPeerName = parsedArgs.get(ConnectToQueueOption.SslPeerName.getName());
-		final Optional<String> sslProtocol = parsedArgs.get(ConnectToQueueOption.SslProtocol.getName());		
-		
+		final Optional<String> sslProtocol = parsedArgs.get(ConnectToQueueOption.SslProtocol.getName());
+		final Optional<String> trustStorePath = parsedArgs.get(ConnectToQueueOption.TrustStorePath.getName());
+		final Optional<String> trustStorePassword = parsedArgs.get(ConnectToQueueOption.TrustStorePassword.getName());
+		final Optional<String> keyStorePath = parsedArgs.get(ConnectToQueueOption.KeyStorePath.getName());
+		final Optional<String> keyStorePassword = parsedArgs.get(ConnectToQueueOption.KeyStorePassword.getName());
+		final Optional<String> queueOperationString = parsedArgs.get(ConnectToQueueOption.QueueOperation.getName());
+		final QueueOperation queueOperation = (queueOperationString.or("CREATE").equals("CREATE")) ? QueueOperation.CREATE : QueueOperation.ACCESS;
+		final Optional<String> openOptionsStr = parsedArgs.get(ConnectToQueueOption.OpenOptions.getName());
+		final int openOptions = Integer.parseInt(openOptionsStr.or("8240"));
+
 		final MQQueueConnectionFactory mqQueueConnectionFactory;
 		try {
 			mqQueueConnectionFactory = new MQQueueConnectionFactory();
 			mqQueueConnectionFactory.setQueueManager(queueManager);
 			mqQueueConnectionFactory.setHostName(hostName);
-			mqQueueConnectionFactory.setPort(Integer.parseInt(port));
-			mqQueueConnectionFactory.setChannel(channel);			
+			MQEnvironment.hostname = hostName;
+			final int intPort = Integer.parseInt(port);
+			mqQueueConnectionFactory.setPort(intPort);
+			MQEnvironment.port = intPort;
+			mqQueueConnectionFactory.setChannel(channel);
+			MQEnvironment.channel = channel;
 			mqQueueConnectionFactory.setTransportType(com.ibm.mq.jms.JMSC.MQJMS_TP_CLIENT_MQ_TCPIP);			
 			if(ccsid.isPresent()){
-				mqQueueConnectionFactory.setCCSID(Integer.parseInt(ccsid.get()));
+				final int intCCSID = Integer.parseInt(ccsid.get());
+				mqQueueConnectionFactory.setCCSID(intCCSID);
+				MQEnvironment.CCSID = intCCSID;
 			}
 			if(transportProperty.isPresent()){
 				MQEnvironment.properties.put(MQC.TRANSPORT_PROPERTY, transportProperty.get());
 			}
 			if(isDebug){
 				System.setProperty("javax.net.debug", "true");
+			}
+			if(trustStorePath.isPresent()){
+				if(isDebug){
+					logger.debug("Setting javax.net.ssl.trustStore=" + trustStorePath.get());
+				}
+				System.setProperty("javax.net.ssl.trustStore", trustStorePath.get() );
+			}
+			if(trustStorePassword.isPresent()){
+				if(isDebug){
+					logger.debug("Setting javax.net.ssl.trustStorePassword=" + trustStorePassword.get());
+				}
+				System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword.get() );
+			}
+			if(keyStorePath.isPresent()){
+				if(isDebug){
+					logger.debug("Setting javax.net.ssl.keyStore=" + keyStorePath.get());
+				}
+				System.setProperty("javax.net.ssl.keyStore", keyStorePath.get() );
+			}
+			if(keyStorePassword.isPresent()){
+				if(isDebug){
+					logger.debug("Setting javax.net.ssl.keyStorePassword=" + keyStorePassword.get());
+				}
+				System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword.get() );
 			}
 			MQEnvironment.sslFipsRequired = isSslFipsRequired;
 			mqQueueConnectionFactory.setSSLFipsRequired(isSslFipsRequired);
@@ -114,8 +145,9 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 						logger.debug("Getting instance of SSL Context on default protocol");
 					}
 					sslContext = SSLContext.getDefault();
-				}		
-				
+				}
+				KeyManager[] keyManagers = new KeyManager[0];
+
 				final String certificateName = context.getCertificateManager().getCertificateName();
 				if (certificateName != null) {
 					if(isDebug){
@@ -125,42 +157,45 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 					final String certificateFolder = context.getCertificateManager().getCertificateFolder();
 					final String certificatePath = certificateFolder + File.separator + certificateName;
 					final InputStream certificateInputStream = context.getFileManager().getFileInputStream(certificatePath);
-					final KeyStore keystore = KeyStore.getInstance(NEOLOAD_KEYSTORE_FORMAT);				
+					final KeyStore keystore = KeyStore.getInstance(NEOLOAD_KEYSTORE_FORMAT);
 					keystore.load(certificateInputStream, certificatePassword);
 					if(isDebug){
 						logger.debug("Number of keys on JKS: " + Integer.toString(keystore.size()));
+						logger.debug("Initializing key manager...");
 					}
 					final KeyManagerFactory kmf = KeyManagerFactory.getInstance(NEOLOAD_CERTIFICATE_ALGORITHM);
-					if(isDebug){
-						logger.debug("Init key manager");
-					}
 					kmf.init(keystore, certificatePassword);
-					
-					final TrustManager[] trustAllCerts = new TrustManager[] {
-							new X509TrustManager() {
-								@Override
-								public X509Certificate[] getAcceptedIssuers() {
-									return new X509Certificate[0];
-								}
-								@Override
-								@SuppressWarnings("squid:S4424")
-								public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-									// Trust all client certificates
-								}
-								@Override
-								@SuppressWarnings("squid:S4424")
-								public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-									// Trust all server certificates
-								}
-							}
-					};
+					keyManagers = kmf.getKeyManagers();
 					if(isDebug){
-						logger.debug("Init SSL context");
+						logger.debug("Key manager initialized.");
 					}
-					sslContext.init(kmf.getKeyManagers(), trustAllCerts, new java.security.SecureRandom());	
-				}				
-								
-		        final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+				}
+				if(isDebug){
+					logger.debug("Initializing SSL context...");
+				}
+				final TrustManager[] trustAllCerts = new TrustManager[] {
+						new X509TrustManager() {
+							@Override
+							public X509Certificate[] getAcceptedIssuers() {
+								return new X509Certificate[0];
+							}
+							@Override
+							@SuppressWarnings("squid:S4424")
+							public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+								// Trust all client certificates
+							}
+							@Override
+							@SuppressWarnings("squid:S4424")
+							public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+								// Trust all server certificates
+							}
+						}
+				};
+				sslContext.init(keyManagers, trustAllCerts, new java.security.SecureRandom());
+				if(isDebug){
+					logger.debug("SSL context initialized.");
+				}
+				final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 		        if(isDebug){
 					logger.debug("Set SSL SocketFactory");
 				}
@@ -189,6 +224,8 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 					logger.debug("Creating queue connection with login/password");
 				}
 				queueConnection = mqQueueConnectionFactory.createQueueConnection(username.orNull(), password.orNull());
+				MQEnvironment.userID = username.orNull();
+				MQEnvironment.password = password.orNull();
 			} else {
 				if(isDebug){
 					logger.debug("Creating queue connection without login/password");
@@ -199,19 +236,6 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 			handleMqException(logger, sampleResult, jmsException, "Could not create queue connection: ");
 			return sampleResult;
 		}
-
-		if(isDebug){
-			logger.debug("Creating queue session");
-		}
-		
-		final QueueSession queueSession;
-		try {
-			queueSession = queueConnection.createQueueSession(isTransacted(parsedArgs), getAcknowledgeMode(parsedArgs));
-		} catch (final JMSException jmsException) {
-			handleMqException(logger, sampleResult, jmsException, "Could not create queue session: ");
-			return sampleResult;
-		}
-
 		if(isDebug){
 			logger.debug("Starting connection");
 		}
@@ -221,31 +245,89 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 			handleMqException(logger, sampleResult, jmsException, "Could not start connection: ");
 			return sampleResult;
 		}
-
 		if(isDebug){
-			logger.debug("Creating queue");
+			logger.debug("Connection established.");
+			logger.debug("QueueOperation: " + queueOperation.name());
 		}
-		final Queue queue;
-		try {
-			queue = queueSession.createQueue(queueName);
-			if(queue instanceof MQQueue && isDebug){
-				logger.debug("Target Client: "+((MQQueue)queue).getTargetClient());
+
+		if(queueOperation == QueueOperation.CREATE){
+			if(isDebug){
+				logger.debug("Creating queue session");
 			}
-		} catch (final JMSException jmsException) {
-			sampleResult.setError(true);
-			sampleResult.setResponseContent(STATUS_CODE_ERROR_QUEUE_CONNECTION);
-			sampleResult.setResponseContent("Could not create queue: " + jmsException.toString());
-			logger.error("Could not create queue: ", jmsException);
-			return sampleResult;
+			final Queue queue;
+			final QueueSession queueSession;
+			try {
+				queueSession = queueConnection.createQueueSession(isTransacted(parsedArgs), getAcknowledgeMode(parsedArgs));
+			} catch (final JMSException jmsException) {
+				handleMqException(logger, sampleResult, jmsException, "Could not create queue session: ");
+				return sampleResult;
+			}
+			if(isDebug){
+				logger.debug("Queue session created");
+				logger.debug("Creating queue");
+			}
+			try {
+				queue = queueSession.createQueue(queueName);
+				if(queue instanceof MQQueue && isDebug){
+					logger.debug("Target Client: "+((MQQueue)queue).getTargetClient());
+				}
+			} catch (final JMSException jmsException) {
+				sampleResult.setError(true);
+				sampleResult.setResponseContent(STATUS_CODE_ERROR_QUEUE_CONNECTION);
+				sampleResult.setResponseContent("Could not create queue: " + jmsException.toString());
+				logger.error("Could not create queue: ", jmsException);
+				return sampleResult;
+			}
+			if(isDebug){
+				logger.debug("Queue created");
+			}
+			// Put Connection and Destination in the context of the VU, so it could be retrieved further to handle message
+			if(isDebug){
+				logger.debug("Putting JmsQueueContext in the context of the VU (name=" + queueName + ")");
+			}
+			context.getCurrentVirtualUser().put(queueName,
+					getContext(logger, queueConnection, queue, isTransacted(parsedArgs), getAcknowledgeMode(parsedArgs)));
+
+		} else {
+			//  QueueOperation.ACCESS
+			if(isDebug){
+				logger.debug("Creating MQQueueManager");
+			}
+			MQQueueManager mqQueueManager = null;
+			try {
+				mqQueueManager = new MQQueueManager("queueManager");
+			} catch (MQException mqException){
+				sampleResult.setError(true);
+				sampleResult.setResponseContent(STATUS_CODE_ERROR_QUEUE_CONNECTION);
+				sampleResult.setResponseContent("Could not create MQQueueManager: " + mqException.toString());
+				logger.error("Could not create MQQueueManager: ", mqException);
+				return sampleResult;
+			}
+			if(isDebug){
+				logger.debug("MQQueueManager created");
+				logger.debug("Accessing queue");
+			}
+			com.ibm.mq.MQQueue mqQueue;
+			try {
+				mqQueue = mqQueueManager.accessQueue(queueName, openOptions, null, null, null);
+			} catch (MQException mqException){
+				sampleResult.setError(true);
+				sampleResult.setResponseContent(STATUS_CODE_ERROR_QUEUE_CONNECTION);
+				sampleResult.setResponseContent("Could not create MQQueueManager: " + mqException.toString());
+				logger.error("Could not create MQQueueManager: ", mqException);
+				return sampleResult;
+			}
+			if(isDebug){
+				logger.debug("Queue accessed successfully.");
+			}
+
+			// TODO: persist MQQueue on context...
+			// Put Connection and Destination in the context of the VU, so it could be retrieved further to handle message
+			// if(isDebug){logger.debug("Putting JmsQueueContext in the context of the VU (name=" + queueName + ")");}
+			// context.getCurrentVirtualUser().put(queueName, getContext(logger, queueConnection, mqQueue, isTransacted(parsedArgs), getAcknowledgeMode(parsedArgs)));
 		}
 
-		// Put Connection and Destination in the context of the VU, so it could be retrieved further to handle message
-		if(isDebug){
-			logger.debug("Putting JmsQueueContext in the context of the VU (name=" + queueName + ")");
-		}
-		context.getCurrentVirtualUser().put(queueName,
-				getContext(logger, queueConnection, queue, isTransacted(parsedArgs), getAcknowledgeMode(parsedArgs)));		
-		sampleResult.setResponseContent("Connection to queue " + queueName + " successful.");
+		sampleResult.setResponseContent(((queueOperation==QueueOperation.CREATE) ? "Creation of" : "Accessing ") + "queue " + queueName + " successful.");
 		if(isDebug){
 			logger.debug("Connection to queue " + queueName + " successful.");
 		}
@@ -286,5 +368,4 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 	public void stopExecute() {
 		// Not implemented
 	}
-
 }
