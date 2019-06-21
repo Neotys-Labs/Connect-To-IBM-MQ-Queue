@@ -56,7 +56,7 @@ Important: NeoLoad does not include MQ implementation jars (like mqcontext.jar).
 | KeyStorePath     | Location of the Java keystore file containing an application process's own certificate and private key. (Default value: <path-to-keystore.jks>) | optional |
 | KeyStorePassword     | Password to unlock the keystore file. | optional |
 | QueueOperation     | CREATE: Create queue session then create queue / ACCESS: Access existing queue MQQueueManager. (Default value: CREATE) | optional |
-| OpenOptions | Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) | MQC.MQOO_INQUIRE (32) | MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240. (Default value: 8240) |  optional |
+| OpenOptions | Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) AND MQC.MQOO_INQUIRE (32) AND MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240. (Default value: 8240) |  optional |
 
 ## Examples
 
