@@ -51,6 +51,12 @@ Important: NeoLoad does not include MQ implementation jars (like mqcontext.jar).
 | SslCipherSuite     | SSL Cipher Suite. | optional |
 | SslPeerName     | SSL Peer Name. | optional |
 | SslProtocol     | SSL protocol to use, e.g. TLSv1, TLSv1.2. | optional |
+| TrustStorePath  | Location of the Java keystore file containing the collection of CA certificates trusted by this application process (trust store) (Default value: <path-to-truststore.jks>) | optional |
+| TrustStorePassword     | Password to unlock the truststore file. | optional |
+| KeyStorePath     | Location of the Java keystore file containing an application process's own certificate and private key. (Default value: <path-to-keystore.jks>) | optional |
+| KeyStorePassword     | Password to unlock the keystore file. | optional |
+| QueueOperation     | CREATE: Create queue session then create queue / ACCESS: Access existing queue MQQueueManager. (Default value: CREATE) | optional |
+| OpenOptions | Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) | MQC.MQOO_INQUIRE (32) | MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240. (Default value: 8240) |  optional |
 
 ## Examples
 
@@ -100,5 +106,8 @@ Password=passw0rd
 
 ## Changelog
 
+* 2.1.8 - Support of parameter OpenOptions.
+* 2.1.7 - Support of parameter QueueOperation.
+* 2.1.6 - Support of parameters TrustStorePath, TrustStorePassword, KeyStorePath, KeyStorePassword.
 * 2.1.5 - Support of TLS
 * 2.0.3 - Add the possibility to specify the username and password used to create the connection.
