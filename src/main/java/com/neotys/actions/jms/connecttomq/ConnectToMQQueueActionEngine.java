@@ -79,6 +79,12 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 		final Optional<String> openOptionsStr = parsedArgs.get(ConnectToQueueOption.OpenOptions.getName());
 		final int openOptions = Integer.parseInt(openOptionsStr.or("8240"));
 
+		if(isDebug){
+			System.setProperty("javax.net.debug", "true");
+			// will generate a log file named mqjavaclient_***.trc with trace information in installation directory.
+			System.setProperty("com.ibm.msg.client.commonservices.trace.status","ON");
+		}
+
 		final MQQueueConnectionFactory mqQueueConnectionFactory;
 		try {
 			mqQueueConnectionFactory = new MQQueueConnectionFactory();
@@ -98,9 +104,6 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 			}
 			if(transportProperty.isPresent()){
 				MQEnvironment.properties.put(MQC.TRANSPORT_PROPERTY, transportProperty.get());
-			}
-			if(isDebug){
-				System.setProperty("javax.net.debug", "true");
 			}
 			if(trustStorePath.isPresent()){
 				if(isDebug){
@@ -129,6 +132,9 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 			MQEnvironment.sslFipsRequired = isSslFipsRequired;
 			mqQueueConnectionFactory.setSSLFipsRequired(isSslFipsRequired);
 			if(useIBMCipherMappings.isPresent()){
+				if(isDebug){
+					logger.debug("Setting com.ibm.mq.cfg.useIBMCipherMappings=" + useIBMCipherMappings.get());
+				}
 				System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", useIBMCipherMappings.get());
 			}
 			System.setProperty("com.ibm.mq.cfg.preferTLS", String.valueOf(isPreferTLS));
