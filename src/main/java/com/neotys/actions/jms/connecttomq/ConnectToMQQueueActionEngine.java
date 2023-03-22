@@ -17,7 +17,11 @@ import javax.jms.*;
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.IllegalStateException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +82,10 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 		final QueueOperation queueOperation = (queueOperationString.or("CREATE").equals("CREATE")) ? QueueOperation.CREATE : QueueOperation.ACCESS;
 		final Optional<String> openOptionsStr = parsedArgs.get(ConnectToQueueOption.OpenOptions.getName());
 		final int openOptions = Integer.parseInt(openOptionsStr.or("8240"));
+		final boolean isTlsInsecure = parsedArgs.get(ConnectToQueueOption.TLSInsecure.getName()).transform(a -> "true".equals(a)).or(false);
 
 		if(isDebug){
-			System.setProperty("javax.net.debug", "true");
+			System.setProperty("javax.net.debug", "all");
 			// will generate a log file named mqjavaclient_***.trc with trace information in installation directory.
 			System.setProperty("com.ibm.msg.client.commonservices.trace.status","ON");
 		}
@@ -146,65 +151,88 @@ public final class ConnectToMQQueueActionEngine implements ActionEngine {
 						logger.debug("Getting instance of SSL Context on protocol: " + sslProtocol.get());
 					}
 					sslContext = SSLContext.getInstance(sslProtocol.get());
+					KeyManager[] keyManagers = new KeyManager[0];
+
+					final String certificateName = context.getCertificateManager().getCertificateName();
+					if (certificateName != null) {
+						if(isDebug){
+							logger.debug("Use certificate as specified in NeoLoad Certificates Manager.");
+						}
+						final char[] certificatePassword = context.getCertificateManager().getCertificatePassword().toCharArray();
+						final String certificateFolder = context.getCertificateManager().getCertificateFolder();
+						final String certificatePath = certificateFolder + File.separator + certificateName;
+						final InputStream certificateInputStream = context.getFileManager().getFileInputStream(certificatePath);
+						final KeyStore keystore = KeyStore.getInstance(NEOLOAD_KEYSTORE_FORMAT);
+						keystore.load(certificateInputStream, certificatePassword);
+						if(isDebug){
+							logger.debug("Number of keys on JKS: " + Integer.toString(keystore.size()));
+							logger.debug("Initializing key manager...");
+						}
+						final KeyManagerFactory kmf = KeyManagerFactory.getInstance(NEOLOAD_CERTIFICATE_ALGORITHM);
+						kmf.init(keystore, certificatePassword);
+						keyManagers = kmf.getKeyManagers();
+						if(isDebug){
+							logger.debug("Key manager initialized.");
+						}
+					}
+					if(isDebug){
+						logger.debug("Initializing SSL context...");
+					}
+					final TrustManager[] trustAllCerts = new TrustManager[] {
+							new X509TrustManager() {
+								@Override
+								public X509Certificate[] getAcceptedIssuers() {
+									return new X509Certificate[0];
+								}
+								@Override
+								@SuppressWarnings("squid:S4424")
+								public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) throws CertificateException {
+									// Trust all client certificates
+								}
+								@Override
+								@SuppressWarnings("squid:S4424")
+								public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) throws CertificateException {
+									if(!isTlsInsecure){
+										if (certs != null && certs.length > 0 && certs[0] != null) {
+											try {
+												getDefaultX509TrustManager().checkServerTrusted(certs, authType);
+											} catch (NoSuchAlgorithmException | KeyStoreException | CertificateException e) {
+												throw new CertificateException("Server SSL certificate rejected - " + e.getMessage());
+											}
+										}
+									}
+									// Else, Trust all server certificates
+								}
+
+								private X509TrustManager getDefaultX509TrustManager() throws NoSuchAlgorithmException, KeyStoreException {
+									TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+									tmf.init((KeyStore) null);
+
+									for (TrustManager tm : tmf.getTrustManagers()) {
+										if (tm instanceof X509TrustManager) {
+											return (X509TrustManager) tm;
+										}
+									}
+									throw new IllegalStateException("X509TrustManager is not found");
+								}
+							}
+					};
+					sslContext.init(keyManagers, trustAllCerts, new java.security.SecureRandom());
+					if(isDebug){
+						logger.debug("SSL context initialized.");
+					}
 				} else {
 					if(isDebug){
 						logger.debug("Getting instance of SSL Context on default protocol");
 					}
 					sslContext = SSLContext.getDefault();
 				}
-				KeyManager[] keyManagers = new KeyManager[0];
 
-				final String certificateName = context.getCertificateManager().getCertificateName();
-				if (certificateName != null) {
-					if(isDebug){
-						logger.debug("Use certificate as specified in NeoLoad Certificates Manager.");
-					}
-					final char[] certificatePassword = context.getCertificateManager().getCertificatePassword().toCharArray();
-					final String certificateFolder = context.getCertificateManager().getCertificateFolder();
-					final String certificatePath = certificateFolder + File.separator + certificateName;
-					final InputStream certificateInputStream = context.getFileManager().getFileInputStream(certificatePath);
-					final KeyStore keystore = KeyStore.getInstance(NEOLOAD_KEYSTORE_FORMAT);
-					keystore.load(certificateInputStream, certificatePassword);
-					if(isDebug){
-						logger.debug("Number of keys on JKS: " + Integer.toString(keystore.size()));
-						logger.debug("Initializing key manager...");
-					}
-					final KeyManagerFactory kmf = KeyManagerFactory.getInstance(NEOLOAD_CERTIFICATE_ALGORITHM);
-					kmf.init(keystore, certificatePassword);
-					keyManagers = kmf.getKeyManagers();
-					if(isDebug){
-						logger.debug("Key manager initialized.");
-					}
-				}
-				if(isDebug){
-					logger.debug("Initializing SSL context...");
-				}
-				final TrustManager[] trustAllCerts = new TrustManager[] {
-						new X509TrustManager() {
-							@Override
-							public X509Certificate[] getAcceptedIssuers() {
-								return new X509Certificate[0];
-							}
-							@Override
-							@SuppressWarnings("squid:S4424")
-							public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-								// Trust all client certificates
-							}
-							@Override
-							@SuppressWarnings("squid:S4424")
-							public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-								// Trust all server certificates
-							}
-						}
-				};
-				sslContext.init(keyManagers, trustAllCerts, new java.security.SecureRandom());
-				if(isDebug){
-					logger.debug("SSL context initialized.");
-				}
 				final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 		        if(isDebug){
 					logger.debug("Set SSL SocketFactory");
 				}
+				MQEnvironment.sslSocketFactory = sslSocketFactory;
 		        mqQueueConnectionFactory.setSSLSocketFactory(sslSocketFactory);
 			}
 			if(sslCipherSuite.isPresent()){

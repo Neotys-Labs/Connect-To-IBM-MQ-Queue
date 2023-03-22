@@ -147,7 +147,12 @@ public final class ConnectToMQQueueArguments {
 		OpenOptions("OpenOptions", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
 				"8240",
 				"Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) | MQC.MQOO_INQUIRE (32) | MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240.",
-				ConnectToMQQueueArgumentValidator.INTEGER_VALIDATOR);
+				ConnectToMQQueueArgumentValidator.INTEGER_VALIDATOR),
+
+		TLSInsecure("tls.insecure", OptionalRequired.Optional, AppearsByDefault.False, Type.TEXT,
+				"",
+				"By default set to false, it only accept TLS valid certificates. Set to true to ignore TLS certificates issues. Only applicable when parameter " + SslProtocol.getName() + " is set (default SSLContext always performs certificates checking).",
+				ConnectToMQQueueArgumentValidator.BOOLEAN_VALIDATOR);
 
 		private final String name;
 		private final OptionalRequired optionalRequired;

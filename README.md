@@ -31,32 +31,33 @@ Important: NeoLoad does not include MQ implementation jars (like mqcontext.jar).
 
 ## Parameters
 
-| Name                     | Description       | Required/Optional|
+| Name                     | Description                                                                                                                                                                                                                                | Required/Optional|
 | ---------------          | ----------------- |----------------- |
-| QueueManager | The fully qualified class name of the factory class that will create the initial context. | required |
-| HostName     | The name of the host. | required |
-| Port         | The port for client connection. | required |
-| Channel      | The name of the channel – Only applies to client transport mode. | required |
-| QueueName    | The name of the queue | required |
-| QueueSessionTransacted      | A boolean to indicate whether the session is transacted. | optional |
-| QueueSessionAcknowledgeMode | An integer to indicate whether the consumer or the client will acknowledge any messages it receives; ignored if the session is transacted. Legal values are 1 for AUTO_ACKNOWLEDGE, 2 for CLIENT_ACKNOWLEDGE or 3 for DUPS_OK_ACKNOWLEDGE.| optional |
-| Username     | The username used to create the connection. | optional |
-| Password     | The password used to create the connection. | optional |
-| CCSID     | Choosing client or server coded character set identifier. | optional |
-| TransportProperty     | Tansport property. For example 'MQSeries', 'MQSeries Client', 'MQSeries Bindings', or 'MQJD'. | optional |
-| Debug     | Debug: true/fals | optional |
-| SslFipsRequired     | Specify that an SSL or TLS channel must use only FIPS-certified CipherSpecs. true/false | optional |
-| UseIBMCipherMappings     | UseIBMCipherMappingss. true/false | optional |
-| PreferTLS     | PreferTLS. true/false | optional |
-| SslCipherSuite     | SSL Cipher Suite. | optional |
-| SslPeerName     | SSL Peer Name. | optional |
-| SslProtocol     | SSL protocol to use, e.g. TLSv1, TLSv1.2. | optional |
-| TrustStorePath  | Location of the Java keystore file containing the collection of CA certificates trusted by this application process (trust store) (Default value: <path-to-truststore.jks>) | optional |
-| TrustStorePassword     | Password to unlock the truststore file. | optional |
-| KeyStorePath     | Location of the Java keystore file containing an application process's own certificate and private key. (Default value: <path-to-keystore.jks>) | optional |
-| KeyStorePassword     | Password to unlock the keystore file. | optional |
-| QueueOperation     | CREATE: Create queue session then create queue / ACCESS: Access existing queue MQQueueManager. (Default value: CREATE) | optional |
-| OpenOptions | Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) AND MQC.MQOO_INQUIRE (32) AND MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240. (Default value: 8240) |  optional |
+| QueueManager | The fully qualified class name of the factory class that will create the initial context.                                                                                                                                                  | required |
+| HostName     | The name of the host.                                                                                                                                                                                                                      | required |
+| Port         | The port for client connection.                                                                                                                                                                                                            | required |
+| Channel      | The name of the channel – Only applies to client transport mode.                                                                                                                                                                           | required |
+| QueueName    | The name of the queue                                                                                                                                                                                                                      | required |
+| QueueSessionTransacted      | A boolean to indicate whether the session is transacted.                                                                                                                                                                                   | optional |
+| QueueSessionAcknowledgeMode | An integer to indicate whether the consumer or the client will acknowledge any messages it receives; ignored if the session is transacted. Legal values are 1 for AUTO_ACKNOWLEDGE, 2 for CLIENT_ACKNOWLEDGE or 3 for DUPS_OK_ACKNOWLEDGE. | optional |
+| Username     | The username used to create the connection.                                                                                                                                                                                                | optional |
+| Password     | The password used to create the connection.                                                                                                                                                                                                | optional |
+| CCSID     | Choosing client or server coded character set identifier.                                                                                                                                                                                  | optional |
+| TransportProperty     | Tansport property. For example 'MQSeries', 'MQSeries Client', 'MQSeries Bindings', or 'MQJD'.                                                                                                                                              | optional |
+| Debug     | Debug: true/fals                                                                                                                                                                                                                           | optional |
+| SslFipsRequired     | Specify that an SSL or TLS channel must use only FIPS-certified CipherSpecs. true/false                                                                                                                                                    | optional |
+| UseIBMCipherMappings     | UseIBMCipherMappingss. true/false                                                                                                                                                                                                          | optional |
+| PreferTLS     | PreferTLS. true/false                                                                                                                                                                                                                      | optional |
+| SslCipherSuite     | SSL Cipher Suite.                                                                                                                                                                                                                          | optional |
+| SslPeerName     | SSL Peer Name.                                                                                                                                                                                                                             | optional |
+| SslProtocol     | SSL protocol to use, e.g. TLSv1, TLSv1.2.                                                                                                                                                                                                  | optional |
+| TrustStorePath  | Location of the Java keystore file containing the collection of CA certificates trusted by this application process (trust store) (Default value: <path-to-truststore.jks>)                                                                | optional |
+| TrustStorePassword     | Password to unlock the truststore file.                                                                                                                                                                                                    | optional |
+| KeyStorePath     | Location of the Java keystore file containing an application process's own certificate and private key. (Default value: <path-to-keystore.jks>)                                                                                            | optional |
+| KeyStorePassword     | Password to unlock the keystore file.                                                                                                                                                                                                      | optional |
+| QueueOperation     | CREATE: Create queue session then create queue / ACCESS: Access existing queue MQQueueManager. (Default value: CREATE)                                                                                                                     | optional |
+| OpenOptions | Integer for open option as specified here: https://docs.oracle.com/cd/E19509-01/820-4407/ggjyo/index.html. By default, MQC.MQOO_OUTPUT (16) AND MQC.MQOO_INQUIRE (32) AND MQC.MQOO_FAIL_IF_QUIESCING (8192) = 8240. (Default value: 8240)  |  optional |
+| tls.insecure | By default set to false, it only accept TLS valid certificates. Set to true to ignore TLS certificates issues. Only applicable when parameter SslProtocol is set (default SSLContext always performs certificates checking).               |  optional |
 
 ## Examples
 
@@ -96,7 +97,7 @@ To use a X509 client certificate to negotiate the TLS communication, import the 
 
 ## Test environment
 
-This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/) version 9.1.2.0. See [docker-compose.yaml](src/test/resources/docker-compose-ibm-mq.yaml) file.
+This advanced action was tested based on a [docker image of IBM MQ](https://hub.docker.com/r/ibmcom/mq/) version 9.1.2.0. Run with: docker-compose -f [docker-compose-ibm-mq.yaml](src/test/resources/docker-compose-ibm-mq.yaml) up 
 
 IBM MQ Console: https://localhost:9443/ibmmq/console/login.html
 
@@ -106,6 +107,7 @@ Password=passw0rd
 
 ## Changelog
 
+* 2.2.1 - For security purpose, do not ignore TLS certificates issues (use parameter **tls.insecure** for backward compatibility).
 * 2.1.8 - Support of parameter OpenOptions.
 * 2.1.7 - Support of parameter QueueOperation.
 * 2.1.6 - Support of parameters TrustStorePath, TrustStorePassword, KeyStorePath, KeyStorePassword.
